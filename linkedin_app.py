@@ -8,7 +8,12 @@ linkedin_app = Flask(__name__)
 linkedin_app.secret_key = os.urandom(24)
 
 # Configure SQLAlchemy to use the Heroku PostgreSQL database
-linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+db_uri = os.environ.get('DATABASE_URL')
+if db_uri.startswith('postgres://'):
+    db_uri = db_uri.replace('postgres://', 'postgresql://', 1)
+
+linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+linkedin_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy
 db = SQLAlchemy(linkedin_app)
