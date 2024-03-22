@@ -1,38 +1,51 @@
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, session, url_for
 import requests
 import os
+from flask_sqlalchemy import SQLAlchemy
 
+# Initialize Flask app
 linkedin_app = Flask(__name__)
 linkedin_app.secret_key = os.urandom(24)
+
+# Configure SQLAlchemy to use the Heroku PostgreSQL database
+linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+
+# Initialize SQLAlchemy
+db = SQLAlchemy(linkedin_app)
 
 # Your LinkedIn application credentials
 CLIENT_ID = '86xqm0tomtgsbm'
 CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
-# Ensure this redirect URI matches exactly what's registered in your LinkedIn app
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
+# Define the User model for the database
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
+
+    def __repr__(self):
+        return f'<User {self.name}>'
+
+# Routes
 @linkedin_app.route('/')
 def home():
     return 'Welcome to my Flask app!'
 
 @linkedin_app.route('/login/linkedin')
 def login_linkedin():
-    # Initiates the LinkedIn OAuth flow, requesting only openid and profile scopes
     auth_url = (
         "https://www.linkedin.com/oauth/v2/authorization"
         "?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
-        "&scope=openid%20profile"  # Updated to exclude r_emailaddress scope
+        "&scope=openid%20profile%20email"
     )
     return redirect(auth_url)
 
 @linkedin_app.route('/oops')
 def linkedin_callback():
-    # LinkedIn redirects back with a code
     code = request.args.get('code')
-    
-    # Exchange the code for an access token
     token_response = requests.post(
         'https://www.linkedin.com/oauth/v2/accessToken',
         data={
@@ -44,10 +57,10 @@ def linkedin_callback():
         }
     )
     access_token = token_response.json().get('access_token')
-
     # Placeholder for further actions, e.g., fetching profile data
     # For now, just return a simple success message
     return 'LinkedIn login successful! Access token obtained.'
 
 if __name__ == '__main__':
+    # Run the application
     linkedin_app.run(debug=True)
