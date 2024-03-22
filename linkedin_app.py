@@ -2,18 +2,18 @@ from flask import Flask, request, redirect
 import requests
 import os
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)
+linkedin_app = Flask(__name__)
+linkedin_app.secret_key = os.urandom(24)
 
 CLIENT_ID = '86xqm0tomtgsbm'
 CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
-@app.route('/')
+@linkedin_app.route('/')
 def home():
     return 'Welcome to my Flask app! <a href="/login/linkedin">Login with LinkedIn</a>'
 
-@app.route('/login/linkedin')
+@linkedin_app.route('/login/linkedin')
 def login_linkedin():
     auth_url = (
         "https://www.linkedin.com/oauth/v2/authorization"
@@ -24,7 +24,7 @@ def login_linkedin():
     )
     return redirect(auth_url)
 
-@app.route('/oops')
+@linkedin_app.route('/oops')
 def linkedin_callback():
     code = request.args.get('code')
     token_response = requests.post(
@@ -43,4 +43,4 @@ def linkedin_callback():
     return f'LinkedIn login successful! Access token obtained: {access_token}'
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    linkedin_app.run(debug=True)
