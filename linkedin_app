@@ -2,8 +2,8 @@ from flask import Flask, request, redirect
 import requests
 import os
 
-app = Flask(__name__)
-app.secret_key = os.urandom(24)  # Generates a random key for session management
+linkedin_app = Flask(__name__)  # Change 'app' to 'linkedin_app'
+linkedin_app.secret_key = os.urandom(24)  # Generates a random key for session management
 
 # Your LinkedIn application credentials
 CLIENT_ID = '86xqm0tomtgsbm'
@@ -11,11 +11,11 @@ CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
 # Ensure this redirect URI matches exactly what's registered in your LinkedIn app
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
-@app.route('/')
+@linkedin_app.route('/')  # Change 'app' to 'linkedin_app'
 def home():
     return 'Welcome to my Flask app!'
 
-@app.route('/login/linkedin')
+@linkedin_app.route('/login/linkedin')  # Change 'app' to 'linkedin_app'
 def login_linkedin():
     # Initiates the LinkedIn OAuth flow, requesting only openid and profile scopes
     auth_url = (
@@ -27,7 +27,7 @@ def login_linkedin():
     )
     return redirect(auth_url)
 
-@app.route('/oops')
+@linkedin_app.route('/oops')  # Change 'app' to 'linkedin_app'
 def linkedin_callback():
     # LinkedIn redirects back with a code
     code = request.args.get('code')
@@ -50,4 +50,4 @@ def linkedin_callback():
     return 'LinkedIn login successful! Access token obtained.'
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    linkedin_app.run(debug=True)  # Change 'app' to 'linkedin_app'
