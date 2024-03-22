@@ -1,1 +1,1 @@
-web: gunicorn linkedin_app:app
+web: gunicorn linkedin_app:linkedin_app
