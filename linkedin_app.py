@@ -35,7 +35,7 @@ class User(db.Model):
 # Routes
 @linkedin_app.route('/')
 def home():
-    return 'Welcome to my Flask app!'
+    return redirect(url_for('login_linkedin'))
 
 @linkedin_app.route('/login/linkedin')
 def login_linkedin():
