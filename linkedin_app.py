@@ -1,6 +1,9 @@
-from flask import Flask, redirect, request, session, url_for
-from requests_oauthlib import OAuth2Session
+from flask import Flask, request, redirect
+import requests
 import os
+
+linkedin_app = Flask(__name__)  # Change 'app' to 'linkedin_app'
+linkedin_app.secret_key = os.urandom(24)  # Generates a random key for session management
 
 # Your LinkedIn application credentials
 CLIENT_ID = '86xqm0tomtgsbm'
@@ -8,37 +11,43 @@ CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
 # Ensure this redirect URI matches exactly what's registered in your LinkedIn app
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
-# Flask application setup
-linkedin_app = Flask(__name__)
-linkedin_app.secret_key = os.urandom(24)
-
-# Route to home page
-@linkedin_app.route('/')
+@linkedin_app.route('/')  # Change 'app' to 'linkedin_app'
 def home():
-    return 'Welcome to my Flask app! <a href="/login/linkedin">Login with LinkedIn</a>'
+    return 'Welcome to my Flask app!'
 
-# Route to initiate LinkedIn OAuth flow
-@linkedin_app.route('/login/linkedin')
+@linkedin_app.route('/login/linkedin')  # Change 'app' to 'linkedin_app'
 def login_linkedin():
-    linkedin = OAuth2Session(CLIENT_ID, redirect_uri=REDIRECT_URI)
-    authorization_url, state = linkedin.authorization_url(
-        'https://www.linkedin.com/oauth/v2/authorization', 
-        scope=['r_liteprofile', 'r_emailaddress']
+    # Initiates the LinkedIn OAuth flow, requesting only openid and profile scopes
+    auth_url = (
+        "https://www.linkedin.com/oauth/v2/authorization"
+        "?response_type=code"
+        f"&client_id={CLIENT_ID}"
+        f"&redirect_uri={REDIRECT_URI}"
+        "&scope=openid%20profile"  # Updated to exclude r_emailaddress scope
     )
-    session['oauth_state'] = state
-    return redirect(authorization_url)
+    return redirect(auth_url)
 
-# OAuth callback route
-@linkedin_app.route('/oauth/linkedin/callback')
+@linkedin_app.route('/oops')  # Change 'app' to 'linkedin_app'
 def linkedin_callback():
-    linkedin = OAuth2Session(CLIENT_ID, state=session['oauth_state'], redirect_uri=REDIRECT_URI)
-    token = linkedin.fetch_token(
+    # LinkedIn redirects back with a code
+    code = request.args.get('code')
+    
+    # Exchange the code for an access token
+    token_response = requests.post(
         'https://www.linkedin.com/oauth/v2/accessToken',
-        client_secret=CLIENT_SECRET,
-        authorization_response=request.url
+        data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': REDIRECT_URI,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET,
+        }
     )
+    access_token = token_response.json().get('access_token')
 
-    return 'LinkedIn login successful!'
+    # Placeholder for further actions, e.g., fetching profile data
+    # For now, just return a simple success message
+    return 'LinkedIn login successful! Access token obtained.'
 
 if __name__ == '__main__':
-    linkedin_app.run(debug=True)
+    linkedin_app.run(debug=True)  # Change 'app' to 'linkedin_app'
