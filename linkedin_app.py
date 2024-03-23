@@ -1,6 +1,7 @@
 from flask import Flask, redirect, url_for, request
 import requests
 import os
+import logging
 from flask_sqlalchemy import SQLAlchemy
 
 # Initialize Flask app
@@ -19,8 +20,8 @@ linkedin_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(linkedin_app)
 
 # Your LinkedIn application credentials
-CLIENT_ID = '86xqm0tomtgsbm'
-CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
+CLIENT_ID = os.environ.get('LINKEDIN_CLIENT_ID')
+CLIENT_SECRET = os.environ.get('LINKEDIN_CLIENT_SECRET')
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
 # Define the User model for the database
@@ -78,6 +79,9 @@ def linkedin_callback():
     name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
     email = profile_data.get('emailAddress')
 
+    if not name or not email:
+        return 'Name or email not found in LinkedIn profile', 500
+
     # Create a new User object and save it to the database
     new_user = User(name=name, email=email)
     db.session.add(new_user)
@@ -87,5 +91,7 @@ def linkedin_callback():
     return 'User data saved successfully!'
 
 if __name__ == '__main__':
+    # Set up logging
+    logging.basicConfig(level=logging.INFO)
     # Run the application
     linkedin_app.run(debug=True)
