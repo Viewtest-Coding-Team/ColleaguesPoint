@@ -29,6 +29,7 @@ REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
 # Define the User model for the database
 class User(db.Model):
+    __tablename__ = 'users'  # Specify the table name explicitly
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
