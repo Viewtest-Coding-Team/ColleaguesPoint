@@ -10,7 +10,7 @@ linkedin_app.secret_key = os.urandom(24)
 
 # Configure SQLAlchemy to use the Heroku PostgreSQL database
 db_uri = os.environ.get('DATABASE_URL')
-if db_uri.startswith('postgres://'):
+if db_uri and db_uri.startswith('postgres://'):
     db_uri = db_uri.replace('postgres://', 'postgresql://', 1)
 
 linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
@@ -73,27 +73,29 @@ def linkedin_callback():
             'client_secret': CLIENT_SECRET,
         }
     )
-    if token_response.status_code != 200:
-        logging.error('Failed to retrieve access token')
+    if token_response.status_code == 200:
+        logging.info('Access token retrieved successfully')
+        access_token = token_response.json().get('access_token')
+        logging.info(f'Access Token: {access_token}')
+    else:
+        logging.error(f'Failed to retrieve access token. Status code: {token_response.status_code}. Response: {token_response.text}')
         return 'Failed to retrieve access token', 500
 
-    access_token = token_response.json().get('access_token')
-    logging.info('Received access token')
-    
     headers = {'Authorization': f'Bearer {access_token}'}
     profile_response = requests.get('https://api.linkedin.com/v2/me', headers=headers)
 
-    if profile_response.status_code != 200:
-        logging.error('Failed to fetch user data from LinkedIn API')
+    if profile_response.status_code == 200:
+        logging.info('User data fetched successfully from LinkedIn API')
+        profile_data = profile_response.json()
+        logging.info(f'User Data: {profile_data}')
+    else:
+        logging.error(f'Failed to fetch user data. Status code: {profile_response.status_code}. Response: {profile_response.text}')
         return 'Failed to fetch user data from LinkedIn API', 500
-    
-    profile_data = profile_response.json()
-    logging.info('Received user data from LinkedIn API')
 
     name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
     email = profile_data.get('emailAddress')
     
-    logging.info(f'User Name: {name}, Email: {email}')  # Log the retrieved name and email
+    logging.info(f'Parsed User Name: {name}, Email: {email}')
 
     # Create a new User object and save it to the database
     new_user = User(name=name, email=email)
@@ -103,6 +105,7 @@ def linkedin_callback():
         logging.info('User data saved successfully to the database')
     except Exception as e:
         logging.error(f'Error saving user data to the database: {str(e)}')
+        db.session.rollback()
 
     # Check if the new user is in the database
     all_users = User.query.all()
