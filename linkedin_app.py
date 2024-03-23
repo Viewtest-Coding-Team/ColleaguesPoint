@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session, url_for
+from flask import Flask, request, redirect, url_for
 import requests
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -22,7 +22,6 @@ db = SQLAlchemy(linkedin_app)
 CLIENT_ID = '86xqm0tomtgsbm'
 CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
-SCOPE = 'r_liteprofile'  # Scope for accessing basic profile info
 
 # Define the User model for the database
 class User(db.Model):
@@ -45,31 +44,27 @@ def login_linkedin():
         "?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
-        f"&scope={SCOPE}"
+        "&scope=openid%20profile%20email%20r_liteprofile"  # Add r_liteprofile scope
     )
     return redirect(auth_url)
 
 @linkedin_app.route('/oops')
 def linkedin_callback():
     code = request.args.get('code')
-    if code:
-        # Exchange authorization code for access token
-        token_response = requests.post(
-            'https://www.linkedin.com/oauth/v2/accessToken',
-            data={
-                'grant_type': 'authorization_code',
-                'code': code,
-                'redirect_uri': REDIRECT_URI,
-                'client_id': CLIENT_ID,
-                'client_secret': CLIENT_SECRET,
-            }
-        )
-        access_token = token_response.json().get('access_token')
-        # Now you have the access token, you can use it to fetch user data from LinkedIn API
-        # For demonstration, let's just return the access token
-        return f'Access token: {access_token}'
-    else:
-        return 'LinkedIn authorization failed'
+    token_response = requests.post(
+        'https://www.linkedin.com/oauth/v2/accessToken',
+        data={
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': REDIRECT_URI,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET,
+        }
+    )
+    access_token = token_response.json().get('access_token')
+    # Placeholder for further actions, e.g., fetching profile data
+    # For now, just return a simple success message
+    return 'LinkedIn login successful! Access token obtained.'
 
 if __name__ == '__main__':
     # Run the application
