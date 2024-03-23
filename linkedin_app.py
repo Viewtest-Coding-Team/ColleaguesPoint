@@ -8,9 +8,11 @@ import logging
 linkedin_app = Flask(__name__)
 linkedin_app.secret_key = os.urandom(24)
 
-# Configure SQLAlchemy to use the Heroku PostgreSQL database
-db_uri = os.environ.get('DATABASE_URL')
-if db_uri and db_uri.startswith('postgres://'):
+# Check for DATABASE_URL environment variable
+db_uri = os.getenv('DATABASE_URL')
+if not db_uri:
+    raise Exception('DATABASE_URL is not set')
+elif db_uri.startswith('postgres://'):
     db_uri = db_uri.replace('postgres://', 'postgresql://', 1)
 
 linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
@@ -22,9 +24,9 @@ db = SQLAlchemy(linkedin_app)
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Your LinkedIn application credentials
-CLIENT_ID = '86xqm0tomtgsbm'
-CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
+# Your LinkedIn application credentials should ideally be stored as environment variables
+CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID', '86xqm0tomtgsbm')
+CLIENT_SECRET = os.getenv('LINKEDIN_CLIENT_SECRET', 'BUiDCQT0mmGd5nnJ')
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
 # Define the User model for the database
@@ -61,59 +63,54 @@ def linkedin_callback():
         logging.error('Authorization code not found')
         return 'Authorization code not found', 400
     
-    logging.info('Received authorization code')
+    logging.info(f'Received authorization code: {code}')
 
-    token_response = requests.post(
-        'https://www.linkedin.com/oauth/v2/accessToken',
-        data={
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': REDIRECT_URI,
-            'client_id': CLIENT_ID,
-            'client_secret': CLIENT_SECRET,
-        }
-    )
-    if token_response.status_code == 200:
-        logging.info('Access token retrieved successfully')
+    try:
+        token_response = requests.post(
+            'https://www.linkedin.com/oauth/v2/accessToken',
+            data={
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': REDIRECT_URI,
+                'client_id': CLIENT_ID,
+                'client_secret': CLIENT_SECRET,
+            }
+        )
+        token_response.raise_for_status()  # This will raise an exception for HTTP errors
+
         access_token = token_response.json().get('access_token')
         logging.info(f'Access Token: {access_token}')
-    else:
-        logging.error(f'Failed to retrieve access token. Status code: {token_response.status_code}. Response: {token_response.text}')
-        return 'Failed to retrieve access token', 500
 
-    headers = {'Authorization': f'Bearer {access_token}'}
-    profile_response = requests.get('https://api.linkedin.com/v2/me', headers=headers)
+        headers = {'Authorization': f'Bearer {access_token}'}
+        profile_response = requests.get('https://api.linkedin.com/v2/me', headers=headers)
+        profile_response.raise_for_status()  # This will raise an exception for HTTP errors
 
-    if profile_response.status_code == 200:
-        logging.info('User data fetched successfully from LinkedIn API')
         profile_data = profile_response.json()
         logging.info(f'User Data: {profile_data}')
-    else:
-        logging.error(f'Failed to fetch user data. Status code: {profile_response.status_code}. Response: {profile_response.text}')
-        return 'Failed to fetch user data from LinkedIn API', 500
 
-    name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
-    email = profile_data.get('emailAddress')
-    
-    logging.info(f'Parsed User Name: {name}, Email: {email}')
+        name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
+        email = profile_data.get('emailAddress')  # Ensure your LinkedIn app has permissions and this field exists
+        logging.info(f'Parsed User Name: {name}, Email: {email}')
 
-    # Create a new User object and save it to the database
-    new_user = User(name=name, email=email)
-    try:
+        new_user = User(name=name, email=email)
         db.session.add(new_user)
         db.session.commit()
         logging.info('User data saved successfully to the database')
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f'Network or HTTP error occurred: {e}')
+        return 'An error occurred while processing your request.', 500
     except Exception as e:
-        logging.error(f'Error saving user data to the database: {str(e)}')
+        logging.error(f'An error occurred: {e}')
         db.session.rollback()
+        return 'An internal error occurred.', 500
 
-    # Check if the new user is in the database
-    all_users = User.query.all()
-    logging.info(f'All users in the database: {all_users}')
-
-    # Redirect to a success page or do further processing
     return 'User data saved successfully!'
 
 if __name__ == '__main__':
+    # Check if LinkedIn credentials are set
+    if not CLIENT_ID or not CLIENT_SECRET:
+        raise Exception('LinkedIn credentials are not set')
+
     # Run the application
     linkedin_app.run(debug=True)
