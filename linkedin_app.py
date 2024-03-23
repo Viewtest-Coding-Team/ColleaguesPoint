@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, session, url_for
+from flask import Flask, request, redirect
 import requests
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -61,12 +61,25 @@ def linkedin_callback():
             'client_secret': CLIENT_SECRET,
         }
     )
-    # Check if the request was successful
-    if token_response.status_code == 200:
-        return token_response.json()
-    else:
-        return f"Failed to obtain access token: {token_response.status_code}"
+    access_token = token_response.json().get('access_token')
+    
+    # Use the access_token to fetch user data from LinkedIn API
+    headers = {'Authorization': f'Bearer {access_token}'}
+    profile_response = requests.get('https://api.linkedin.com/v2/me', headers=headers)
+    profile_data = profile_response.json()
+
+    # Extract user data from the API response
+    name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
+    email = profile_data.get('emailAddress')
+
+    # Create a new User object and save it to the database
+    new_user = User(name=name, email=email)
+    db.session.add(new_user)
+    db.session.commit()
+
+    # Redirect to a success page or do further processing
+    return 'User data saved successfully!'
 
 if __name__ == '__main__':
     # Run the application
-    linkedin_app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    linkedin_app.run(debug=True)
