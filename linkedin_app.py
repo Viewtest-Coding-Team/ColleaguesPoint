@@ -51,20 +51,23 @@ def login_linkedin():
 @linkedin_app.route('/oops')
 def linkedin_callback():
     code = request.args.get('code')
-    token_response = requests.post(
-        'https://www.linkedin.com/oauth/v2/accessToken',
-        data={
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': REDIRECT_URI,
-            'client_id': CLIENT_ID,
-            'client_secret': CLIENT_SECRET,
-        }
-    )
-    access_token = token_response.json().get('access_token')
-    # Placeholder for further actions, e.g., fetching profile data
-    # For now, just return a simple success message
-    return 'LinkedIn login successful! Access token obtained.'
+    if code:
+        token_response = requests.post(
+            'https://www.linkedin.com/oauth/v2/accessToken',
+            data={
+                'grant_type': 'authorization_code',
+                'code': code,
+                'redirect_uri': REDIRECT_URI,
+                'client_id': CLIENT_ID,
+                'client_secret': CLIENT_SECRET,
+            }
+        )
+        access_token = token_response.json().get('access_token')
+        # Now you have the access token, you can use it to make requests to LinkedIn API
+        # Placeholder for further actions, e.g., fetching profile data
+        return 'LinkedIn login successful! Access token obtained: ' + access_token
+    else:
+        return 'LinkedIn login failed. No authorization code received.'
 
 if __name__ == '__main__':
     # Run the application
