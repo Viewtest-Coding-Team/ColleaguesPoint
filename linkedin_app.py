@@ -29,7 +29,6 @@ REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
 # Define the User model for the database
 class User(db.Model):
-    __tablename__ = 'users'  # Specify the table name explicitly
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
@@ -94,14 +93,20 @@ def linkedin_callback():
     name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
     email = profile_data.get('emailAddress')
     
-    logging.info(f'User Name: {name}, Email: {email}')
+    logging.info(f'User Name: {name}, Email: {email}')  # Log the retrieved name and email
 
     # Create a new User object and save it to the database
     new_user = User(name=name, email=email)
-    db.session.add(new_user)
-    db.session.commit()
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        logging.info('User data saved successfully to the database')
+    except Exception as e:
+        logging.error(f'Error saving user data to the database: {str(e)}')
 
-    logging.info('User data saved successfully to the database')
+    # Check if the new user is in the database
+    all_users = User.query.all()
+    logging.info(f'All users in the database: {all_users}')
 
     # Redirect to a success page or do further processing
     return 'User data saved successfully!'
