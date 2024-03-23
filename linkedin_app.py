@@ -19,7 +19,7 @@ linkedin_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(linkedin_app)
 
 # Your LinkedIn application credentials
-CLIENT_ID = os.environ.get('LINKEDIN_CLIENT_ID')  # Get from environment variable
+CLIENT_ID = os.environ.get('LINKEDIN_CLIENT_ID', '86xqm0tomtgsbm')  # Get from environment variable or use default value
 CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
