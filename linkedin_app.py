@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, session, url_for
 import requests
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -44,7 +44,7 @@ def login_linkedin():
         "?response_type=code"
         f"&client_id={CLIENT_ID}"
         f"&redirect_uri={REDIRECT_URI}"
-        "&scope=openid%20profile%20email%20r_liteprofile"  # Add r_liteprofile scope
+        "&scope=openid%20profile%20email"
     )
     return redirect(auth_url)
 
