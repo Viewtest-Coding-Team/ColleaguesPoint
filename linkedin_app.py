@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, session, request
+from flask import Flask, redirect, url_for, request
 import requests
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -51,6 +51,9 @@ def login_linkedin():
 @linkedin_app.route('/oops')
 def linkedin_callback():
     code = request.args.get('code')
+    if not code:
+        return 'Authorization code not found', 400
+    
     token_response = requests.post(
         'https://www.linkedin.com/oauth/v2/accessToken',
         data={
@@ -61,14 +64,17 @@ def linkedin_callback():
             'client_secret': CLIENT_SECRET,
         }
     )
+    if token_response.status_code != 200:
+        return 'Failed to retrieve access token', 500
+
     access_token = token_response.json().get('access_token')
-    
-    # Use the access_token to fetch user data from LinkedIn API
     headers = {'Authorization': f'Bearer {access_token}'}
     profile_response = requests.get('https://api.linkedin.com/v2/me', headers=headers)
-    profile_data = profile_response.json()
 
-    # Extract user data from the API response
+    if profile_response.status_code != 200:
+        return 'Failed to fetch user data from LinkedIn API', 500
+    
+    profile_data = profile_response.json()
     name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
     email = profile_data.get('emailAddress')
 
