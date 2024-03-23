@@ -1,4 +1,4 @@
-from flask import Flask, redirect, url_for, request
+from flask import Flask, redirect, url_for, request, jsonify
 import requests
 import os
 from flask_sqlalchemy import SQLAlchemy
@@ -24,9 +24,9 @@ db = SQLAlchemy(linkedin_app)
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
-# Your LinkedIn application credentials should ideally be stored as environment variables
-CLIENT_ID = os.getenv('LINKEDIN_CLIENT_ID', '86xqm0tomtgsbm')
-CLIENT_SECRET = os.getenv('LINKEDIN_CLIENT_SECRET', 'BUiDCQT0mmGd5nnJ')
+# Your LinkedIn application credentials
+CLIENT_ID = '86xqm0tomtgsbm'  # Consider moving to environment variables
+CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'  # Consider moving to environment variables
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
 
 # Define the User model for the database
@@ -60,57 +60,19 @@ def login_linkedin():
 def linkedin_callback():
     code = request.args.get('code')
     if not code:
-        logging.error('Authorization code not found')
-        return 'Authorization code not found', 400
-    
+        error = "Authorization code not found"
+        logging.error(error)
+        return jsonify(error=error), 400
+
     logging.info(f'Received authorization code: {code}')
 
+    # Simplified response for debugging
     try:
-        token_response = requests.post(
-            'https://www.linkedin.com/oauth/v2/accessToken',
-            data={
-                'grant_type': 'authorization_code',
-                'code': code,
-                'redirect_uri': REDIRECT_URI,
-                'client_id': CLIENT_ID,
-                'client_secret': CLIENT_SECRET,
-            }
-        )
-        token_response.raise_for_status()  # This will raise an exception for HTTP errors
-
-        access_token = token_response.json().get('access_token')
-        logging.info(f'Access Token: {access_token}')
-
-        headers = {'Authorization': f'Bearer {access_token}'}
-        profile_response = requests.get('https://api.linkedin.com/v2/me', headers=headers)
-        profile_response.raise_for_status()  # This will raise an exception for HTTP errors
-
-        profile_data = profile_response.json()
-        logging.info(f'User Data: {profile_data}')
-
-        name = profile_data.get('localizedFirstName') + ' ' + profile_data.get('localizedLastName')
-        email = profile_data.get('emailAddress')  # Ensure your LinkedIn app has permissions and this field exists
-        logging.info(f'Parsed User Name: {name}, Email: {email}')
-
-        new_user = User(name=name, email=email)
-        db.session.add(new_user)
-        db.session.commit()
-        logging.info('User data saved successfully to the database')
-
-    except requests.exceptions.RequestException as e:
-        logging.error(f'Network or HTTP error occurred: {e}')
-        return 'An error occurred while processing your request.', 500
+        return jsonify(code=code), 200
     except Exception as e:
-        logging.error(f'An error occurred: {e}')
-        db.session.rollback()
-        return 'An internal error occurred.', 500
-
-    return 'User data saved successfully!'
+        logging.error(f'Error processing the LinkedIn callback: {e}')
+        return jsonify(error=str(e)), 500
 
 if __name__ == '__main__':
-    # Check if LinkedIn credentials are set
-    if not CLIENT_ID or not CLIENT_SECRET:
-        raise Exception('LinkedIn credentials are not set')
-
     # Run the application
     linkedin_app.run(debug=True)
