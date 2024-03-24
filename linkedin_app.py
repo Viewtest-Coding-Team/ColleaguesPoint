@@ -70,12 +70,28 @@ def linkedin_callback():
     try:
         logging.info('Fetching access token from LinkedIn')
         # Make a request to LinkedIn's token endpoint and handle the response
-        # For example:
-        # response = requests.post('https://www.linkedin.com/oauth/v2/accessToken', data=data)
-        # access_token = response.json().get('access_token')
-
-        # Simplified response for debugging
-        return jsonify(code=code), 200
+        data = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': REDIRECT_URI,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET
+        }
+        response = requests.post('https://www.linkedin.com/oauth/v2/accessToken', data=data)
+        
+        # Check if the request was successful
+        if response.status_code == 200:
+            access_token = response.json().get('access_token')
+            logging.info('Access token received successfully')
+            # You can now use the access token to make requests to the LinkedIn API
+            # For example:
+            # profile_response = requests.get('https://api.linkedin.com/v2/me', headers={'Authorization': 'Bearer ' + access_token})
+            # profile_data = profile_response.json()
+            return jsonify(access_token=access_token), 200
+        else:
+            error = "Failed to fetch access token from LinkedIn"
+            logging.error(error)
+            return jsonify(error=error), response.status_code
     except Exception as e:
         logging.error(f'Error processing the LinkedIn callback: {e}')
         return jsonify(error=str(e)), 500
