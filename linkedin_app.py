@@ -66,8 +66,15 @@ def linkedin_callback():
 
     logging.info(f'Received authorization code: {code}')
 
-    # Simplified response for debugging
+    # Use the authorization code to fetch access token from LinkedIn
     try:
+        logging.info('Fetching access token from LinkedIn')
+        # Make a request to LinkedIn's token endpoint and handle the response
+        # For example:
+        # response = requests.post('https://www.linkedin.com/oauth/v2/accessToken', data=data)
+        # access_token = response.json().get('access_token')
+
+        # Simplified response for debugging
         return jsonify(code=code), 200
     except Exception as e:
         logging.error(f'Error processing the LinkedIn callback: {e}')
