@@ -2,9 +2,9 @@ from flask import Flask, redirect, url_for, jsonify, request
 import logging
 import os
 import psutil
-import requests  # Add requests module for making HTTP requests
+import requests
 
-app = Flask(__name__)
+linkedin_app = Flask(__name__)  # Changed the name of the Flask app object
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -20,13 +20,13 @@ def log_memory_usage():
     logging.info(f'Memory usage: {memory_info.rss} bytes')
 
 # Routes
-@app.route('/')
+@linkedin_app.route('/')
 def home():
     logging.info('Redirecting to LinkedIn login')
     log_memory_usage()  # Log memory usage
     return redirect(url_for('login_linkedin'))
 
-@app.route('/login/linkedin')
+@linkedin_app.route('/login/linkedin')
 def login_linkedin():
     auth_url = (
         "https://www.linkedin.com/oauth/v2/authorization"
@@ -39,7 +39,7 @@ def login_linkedin():
     log_memory_usage()  # Log memory usage
     return redirect(auth_url)
 
-@app.route('/oops')
+@linkedin_app.route('/oops')
 def linkedin_callback():
     code = request.args.get('code')
     if not code:
@@ -67,4 +67,4 @@ def linkedin_callback():
         return jsonify(error=str(e)), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    linkedin_app.run(debug=True)
