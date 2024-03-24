@@ -24,3 +24,4 @@ SQLAlchemy          ==1.4.31
 typing_extensions   ==4.10.0
 urllib3             ==2.2.1
 Werkzeug            ==3.0.1
+psutil==5.9.0
