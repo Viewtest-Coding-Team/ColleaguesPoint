@@ -1,10 +1,18 @@
 from flask import Flask, redirect, url_for, jsonify, request
+from flask_sqlalchemy import SQLAlchemy
 import logging
 import os
 import psutil
 import requests
 
-linkedin_app = Flask(__name__)  # Changed the name of the Flask app object
+# Initialize Flask application
+linkedin_app = Flask(__name__)
+
+# Configure SQLAlchemy database URI
+linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://u105vsqieobh9l:p881cc34100a964f3efba42cf20b4069bf230f6172a23c0f34310d1cc4c149d3a@cbbirn8v9855bl.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dck0ia67alebo8'
+
+# Initialize SQLAlchemy
+db = SQLAlchemy(linkedin_app)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,6 +20,15 @@ logging.basicConfig(level=logging.INFO)
 # Define LinkedIn authentication keys
 CLIENT_ID = "86xqm0tomtgsbm"
 REDIRECT_URI = "https://colleaguespoint.com/oops"
+
+# Define User model for SQLAlchemy
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+    email = db.Column(db.String(100), unique=True)
+
+    def __repr__(self):
+        return f'<User {self.name}>'
 
 # Function to log memory usage
 def log_memory_usage():
@@ -50,6 +67,12 @@ def linkedin_callback():
 
     logging.info(f'Received authorization code: {code}')
     log_memory_usage()  # Log memory usage
+
+    # Assuming you want to add the user to the database here
+    # For example:
+    # user = User(name='John Doe', email='john@example.com')
+    # db.session.add(user)
+    # db.session.commit()
 
     # Use the authorization code to fetch access token from LinkedIn
     try:
