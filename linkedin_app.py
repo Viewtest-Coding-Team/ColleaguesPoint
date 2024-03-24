@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Define LinkedIn authentication keys
 CLIENT_ID = "86xqm0tomtgsbm"
+CLIENT_SECRET = "BUiDCQT0mmGd5nnJ"
 REDIRECT_URI = "https://colleaguespoint.com/oops"
 
 # Define User model for SQLAlchemy
