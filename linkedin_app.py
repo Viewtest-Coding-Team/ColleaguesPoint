@@ -8,7 +8,10 @@ import requests
 linkedin_app = Flask(__name__)
 
 # Configure SQLAlchemy database URI
-linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+database_uri = os.environ.get('DATABASE_URL')
+if database_uri.startswith("postgres://"):
+    database_uri = database_uri.replace("postgres://", "postgresql://", 1)
+linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 linkedin_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy
