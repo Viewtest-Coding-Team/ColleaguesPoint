@@ -9,7 +9,8 @@ import requests
 linkedin_app = Flask(__name__)
 
 # Configure SQLAlchemy database URI
-linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://u105vsqieobh9l:p881cc34100a964f3efba42cf20b4069bf230f6172a23c0f34310d1cc4c149d3a@cbbirn8v9855bl.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dck0ia67alebo8'
+linkedin_app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'postgresql://u105vsqieobh9l:p881cc34100a964f3efba42cf20b4069bf230f6172a23c0f34310d1cc4c149d3a@cbbirn8v9855bl.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dck0ia67alebo8'
+linkedin_app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize SQLAlchemy
 db = SQLAlchemy(linkedin_app)
@@ -91,4 +92,7 @@ def linkedin_callback():
         return jsonify(error=str(e)), 500
 
 if __name__ == '__main__':
-    linkedin_app.run(debug=True)
+    # Get the port from the environment variable PORT (used by Heroku)
+    port = int(os.environ.get('PORT', 5001))
+    # Run the Flask application
+    linkedin_app.run(debug=True, port=port)
