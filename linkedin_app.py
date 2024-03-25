@@ -21,9 +21,9 @@ db = SQLAlchemy(linkedin_app)
 logging.basicConfig(level=logging.INFO)
 
 # LinkedIn authentication keys
-CLIENT_ID = "86xqm0tomtgsbm"
-CLIENT_SECRET = "BUiDCQT0mmGd5nnJ"
-REDIRECT_URI = "https://colleaguespoint.com/oops"
+CLIENT_ID = os.environ.get('CLIENT_ID', '86xqm0tomtgsbm')
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET', 'BUiDCQT0mmGd5nnJ')
+REDIRECT_URI = os.environ.get('REDIRECT_URI', 'https://colleaguespoint.com/oops')
 
 # Define User model for SQLAlchemy
 class User(db.Model):
@@ -92,8 +92,9 @@ def linkedin_callback():
         # Save or update user in the database
         user = User.query.filter_by(email=email).first()
         if not user:
-            user = User(email=email)
-        user.name = profile_data['localizedFirstName'] + ' ' + profile_data.get('localizedLastName', '')
+            user = User(name=profile_data['localizedFirstName'] + ' ' + profile_data.get('localizedLastName', ''), email=email)
+        else:
+            user.name = profile_data['localizedFirstName'] + ' ' + profile_data.get('localizedLastName', '')
         db.session.add(user)
         db.session.commit()
 
