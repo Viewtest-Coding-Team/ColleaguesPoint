@@ -27,6 +27,7 @@ REDIRECT_URI = os.environ.get('REDIRECT_URI', 'https://colleaguespoint.com/oops'
 
 # Define User model for SQLAlchemy
 class User(db.Model):
+    __tablename__ = 'users'  # Specify the table name explicitly
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
@@ -105,4 +106,4 @@ def linkedin_callback():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    linkedin_app.run(host='0.0.0.0', port=port, debug=False)  # Turn off debug for production
+    linkedin_app.run(host='0.0.0.0', port=port, debug=True)  # Enable debug mode
