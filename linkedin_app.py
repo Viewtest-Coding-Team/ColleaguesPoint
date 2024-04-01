@@ -106,7 +106,7 @@ def linkedin_callback():
         )
         access_token_response.raise_for_status()  # Check for HTTP errors
         access_token = access_token_response.json().get('access_token')
-        logging.info("Access token obtained successfully.")
+        logging.info(f"Access token obtained: {access_token}")
 
         # Fetch user profile information
         logging.info("Retrieving user information...")
@@ -116,11 +116,12 @@ def linkedin_callback():
         )
         userinfo_response.raise_for_status()  # Verify successful response
         userinfo_data = userinfo_response.json()
-        logging.info("User info retrieved successfully.")
+        logging.info(f"User info retrieved: {userinfo_data}")
 
         # Process and store user information
         process_and_store_user_info(userinfo_data)
 
+        logging.info("User information processed and stored successfully.")
         return jsonify(success=True, message="User authenticated and information stored successfully."), 200
     except Exception as e:
         logging.error(f"Error during LinkedIn OAuth flow: {e}")
@@ -133,6 +134,7 @@ def process_and_store_user_info(userinfo_data):
     picture_url = userinfo_data.get('picture')  # Adjust based on actual API response
     locale = userinfo_data.get('locale')  # Adjust based on actual API response
     
+    logging.info(f"Attempting to store/update user in the database: {email}")
     # Store or update user information in the database
     user = User.query.filter_by(email=email).first()
     if not user:
