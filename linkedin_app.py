@@ -21,7 +21,7 @@ db = SQLAlchemy(linkedin_app)
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# LinkedIn authentication keys
+# LinkedIn authentication keys - using provided values
 CLIENT_ID = '86xqm0tomtgsbm'
 CLIENT_SECRET = 'BUiDCQT0mmGd5nnJ'
 REDIRECT_URI = 'https://colleaguespoint.com/oops'
@@ -45,7 +45,7 @@ with linkedin_app.app_context():
 def get_jwks():
     jwks_uri = "https://www.linkedin.com/oauth/openid/jwks"
     response = requests.get(jwks_uri)
-    response.raise_for_status()  # Ensure we raise an exception for bad requests
+    response.raise_for_status()
     return response.json()
 
 def validate_id_token(id_token):
@@ -58,7 +58,6 @@ def validate_id_token(id_token):
             break
     if rsa_key:
         try:
-            # Validate the ID token
             payload = jwt.decode(
                 id_token,
                 rsa_key.to_dict(),
@@ -90,10 +89,10 @@ def home():
 def linkedin_callback():
     code = request.args.get('code')
     if not code:
+        logging.error("No authorization code provided by LinkedIn.")
         return jsonify(error="Authorization code not found"), 400
 
     try:
-        # Exchange code for access token
         access_token_response = requests.post(
             'https://www.linkedin.com/oauth/v2/accessToken',
             data={
@@ -107,21 +106,21 @@ def linkedin_callback():
         )
         access_token_response.raise_for_status()
         access_token = access_token_response.json().get('access_token')
+        logging.info(f'Access token obtained: {access_token}')
 
-        # Fetch user profile using the /v2/userinfo endpoint
         userinfo_response = requests.get(
             'https://api.linkedin.com/v2/userinfo',
             headers={'Authorization': f'Bearer {access_token}'}
         )
         userinfo_response.raise_for_status()
         userinfo_data = userinfo_response.json()
+        logging.info(f'User info retrieved: {userinfo_data}')
 
         name = f"{userinfo_data.get('given_name', '')} {userinfo_data.get('family_name', '')}".strip()
-        email = userinfo_data.get('email')  # Adjust based on actual response structure
-        picture_url = userinfo_data.get('picture')  # Adjust based on actual response structure
-        locale = userinfo_data.get('locale')  # Adjust based on actual response structure
+        email = userinfo_data.get('email')  # Placeholder - adjust as needed
+        picture_url = userinfo_data.get('picture')  # Placeholder - adjust as needed
+        locale = userinfo_data.get('locale')  # Placeholder - adjust as needed
 
-        # Save or update user in the database
         user = User.query.filter_by(email=email).first()
         if not user:
             user = User(name=name, email=email, picture_url=picture_url, locale=locale)
